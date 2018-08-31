@@ -6,14 +6,14 @@ import os.path
 import time
 
 ts = TimeSeries(key='DWCHWE05UICT02QO', output_format='csv')
-path = "C:\\Users\\JaroslavUrban\\Desktop\\StockPricePredicting\\Companies2\\"
-ListOfCompanies = "C:\\Users\\JaroslavUrban\\Desktop\\StockPricePredicting\\1500 companies.csv"
+path = "C:\\Users\\Jaroslav Urban\\Desktop\\PredictingStockPrices\\Companies2\\"
+ListOfCompanies = "C:\\Users\\Jaroslav Urban\\Desktop\\PredictingStockPrices\\1500 companies.csv"
 
 with requests.Session() as s:
-    with open(ListOfCompanies, "r") as companies:
+    with open("../1500 companies.csv", "r") as companies:
         companieslist = csv.reader(companies)
         for row in companieslist:
-            if os.path.isfile(path + row[0] + ".csv"):
+            if os.path.isfile("../Companies2/" + row[0] + ".csv"):
                 continue
 
             data1, meta_data = ts.get_daily_adjusted(symbol=row[0], outputsize='full')
@@ -31,7 +31,7 @@ with requests.Session() as s:
             data3 = csv.reader(decoded_content.splitlines(), delimiter=',')
             time.sleep(12)
 
-            download = s.get("https://www.alphavantage.co/query?function=RSI&symbol=" + row[0] + "&interval=daily&time_period=10&datatype=csv&apikey=DWCHWE05UICT02QO")
+            download = s.get("https://www.alphavantage.co/query?function=RSI&symbol=" + row[0] + "&interval=daily&time_period=10&datatype=csv&apikey=DWCHWE05UICT02QO&series_type=close")
             decoded_content = download.content.decode('utf-8')
             data4 = csv.reader(decoded_content.splitlines(), delimiter=',')
             time.sleep(12)
@@ -40,35 +40,30 @@ with requests.Session() as s:
             decoded_content = download.content.decode('utf-8')
             data5 = csv.reader(decoded_content.splitlines(), delimiter=',')
             time.sleep(12)
-            #
-            # download = s.get("https://www.alphavantage.co/query?function=AROON&symbol=" + row[0] + "&interval=daily&time_period=25&datatype=csv&apikey=DWCHWE05UICT02QO")
-            # decoded_content = download.content.decode('utf-8')
-            # data6 = csv.reader(decoded_content.splitlines(), delimiter=',')
-            # time.sleep(12)
-            #
-            # download = s.get("https://www.alphavantage.co/query?function=BBANDS&symbol=" + row[0] + "&interval=daily&series_type=close&time_period=20&datatype=csv&apikey=DWCHWE05UICT02QO")
-            # decoded_content = download.content.decode('utf-8')
-            # data7 = csv.reader(decoded_content.splitlines(), delimiter=',')
-            # time.sleep(12)
-            #
-            # download = s.get("https://www.alphavantage.co/query?function=ATR&symbol=" + row[0] + "&interval=daily&time_period=14&datatype=csv&apikey=DWCHWE05UICT02QO")
-            # decoded_content = download.content.decode('utf-8')
-            # data8 = csv.reader(decoded_content.splitlines(), delimiter=',')
-            # time.sleep(12)
-            #
-            # download = s.get("https://www.alphavantage.co/query?function=AD&symbol=" + row[0] + "&interval=daily&datatype=csv&apikey=DWCHWE05UICT02QO")
-            # decoded_content = download.content.decode('utf-8')
-            # data9 = csv.reader(decoded_content.splitlines(), delimiter=',')
-            # time.sleep(12)
-            #
-            # download = s.get("https://www.alphavantage.co/query?function=RSI&symbol=" + row[0] + "&interval=daily&datatype=csv&apikey=DWCHWE05UICT02QO")
-            # decoded_content = download.content.decode('utf-8')
-            # data10 = csv.reader(decoded_content.splitlines(), delimiter=',')
-            # time.sleep(12)
 
-            with open(path + row[0] + ".csv", "w", newline="") as newfile:
+            download = s.get("https://www.alphavantage.co/query?function=AROON&symbol=" + row[0] + "&interval=daily&time_period=25&datatype=csv&apikey=DWCHWE05UICT02QO")
+            decoded_content = download.content.decode('utf-8')
+            data6 = csv.reader(decoded_content.splitlines(), delimiter=',')
+            time.sleep(12)
+
+            download = s.get("https://www.alphavantage.co/query?function=BBANDS&symbol=" + row[0] + "&interval=daily&series_type=close&time_period=20&datatype=csv&apikey=DWCHWE05UICT02QO")
+            decoded_content = download.content.decode('utf-8')
+            data7 = csv.reader(decoded_content.splitlines(), delimiter=',')
+            time.sleep(12)
+
+            download = s.get("https://www.alphavantage.co/query?function=ATR&symbol=" + row[0] + "&interval=daily&time_period=14&datatype=csv&apikey=DWCHWE05UICT02QO")
+            decoded_content = download.content.decode('utf-8')
+            data8 = csv.reader(decoded_content.splitlines(), delimiter=',')
+            time.sleep(12)
+
+            download = s.get("https://www.alphavantage.co/query?function=AD&symbol=" + row[0] + "&interval=daily&datatype=csv&apikey=DWCHWE05UICT02QO")
+            decoded_content = download.content.decode('utf-8')
+            data9 = csv.reader(decoded_content.splitlines(), delimiter=',')
+            time.sleep(12)
+
+            with open("../Companies2/" + row[0] + ".csv", "w", newline="") as newfile:
                 csv_writer = csv.writer(newfile)
-                for row1, row2, row3, row4, row5 in zip(data1, data2, data3, data4, data5):
+                for row1, row2, row3, row4, row5, row6, row7, row8, row9 in zip(data1, data2, data3, data4, data5, data6, data7, data8, data9):
                     # if row1 and row2 and row3 and row4 and row5 and row6 and row7 and row8 and row9 and row10:
-                    csv_writer.writerow(row1 + row2 + row3 + row4 + row5)
+                    csv_writer.writerow(row1 + row2 + row3 + row4 + row5 + row6 + row7 + row8 + row9)
             break

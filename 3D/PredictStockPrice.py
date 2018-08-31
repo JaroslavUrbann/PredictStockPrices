@@ -1,6 +1,7 @@
 import numpy as np
 from numpy import array
 import matplotlib.pyplot as plt
+from scipy.stats import zscore
 import pandas as pd
 from pandas import datetime
 import math, time
@@ -17,36 +18,41 @@ from keras.layers.recurrent import LSTM
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from keras.utils import to_categorical
 from keras import backend as K
+import sys
 
 
 def process_stock_data_1(name, n_adj_close_i):
     # <editor-fold desc="Reading csv File">
-    stock = pd.read_csv("../Companies/" + name + ".csv",
+    stock = pd.read_csv("../Companies2/" + name + ".csv",
                         parse_dates=[0],
-                        usecols=["adjusted_close"])[::-1]
-    x = pd.DataFrame(stock)
-    x.columns = ['AdjustedClose']
+                        usecols=["open", "high", "low", "adjusted_close", "MACD", "MACD_Hist", "MACD_Signal", "SlowD", "SlowK", "RSI", "ADX", "Aroon Down", "Aroon Up", "Real Lower Band", "Real Middle Band", "Real Upper Band", "ATR", "Chaikin A/D"])[::-1]
+    df = pd.DataFrame(stock)
     y = pd.DataFrame()
     # </editor-fold>
 
+    # <editor-fold desc="Reshaping Input Data">
+    df = df.apply(pd.to_numeric)
+    df = df.apply(zscore)
+    x = pd.DataFrame()
+    x["StockPrice"] = df.values.tolist()
+    # </editor-fold>
+
     # <editor-fold desc="Adding Shifted Columns">
-    x.AdjustedClose = x.AdjustedClose.astype(float).pct_change()
-    x.AdjustedClose += 0.5
-    x.insert(1, "AdjustedClose+1", x.AdjustedClose.shift(-1))
+    x.insert(1, "StockPrice+1", x.StockPrice.shift(-1))
     for i in range(1, n_adj_close_i):
-        x.insert(0, "AdjustedClose-" + str(i), x.AdjustedClose.shift(i))
+        x.insert(0, "StockPrice-" + str(i), x.StockPrice.shift(i))
     x = x.dropna()
-    y = x.loc[:, "AdjustedClose+1"]
-    x.drop('AdjustedClose+1', axis=1, inplace=True)
+    y["StockPrice+1"] = x.loc[:, "StockPrice+1"]
+    x.drop('StockPrice+1', axis=1, inplace=True)
     # </editor-fold>
 
     # <editor-fold desc="Reshaping DataFrames to Arrays">
     x.reset_index(drop=True, inplace=True)
     y.reset_index(drop=True, inplace=True)
+    for i, row in y.iterrows():
+        y.set_value(i, "StockPrice+1", row[0][3])
     x = array(x.values.tolist())
-    x = x.reshape(x.shape[0], x.shape[1], 1)
-    y[y <= 0.5] = 0
-    y[y > 0.5] = 1
+    # x = x.reshape(x.shape[0], x.shape[1], 1)
     y = array(y.values.tolist())
     # </editor-fold>
 
@@ -56,14 +62,15 @@ def process_stock_data_1(name, n_adj_close_i):
 def build_model1(input_shape, output_shape):
     dropout = 0.2
     model = Sequential()
-    model.add(LSTM(30, batch_input_shape=(None, 30, 1), return_sequences=True))
-    model.add(Dense(30, input_dim=30, activation="relu"))
-    model.add(LSTM(16, return_sequences=False))
+    model.add(LSTM(30, batch_input_shape=(None, input_shape[1], input_shape[2]), return_sequences=True))
+    model.add(Dense(30, input_dim=30, activation="linear"))
+    # model.add(LSTM(16, return_sequences=False))
     model.add(Dropout(dropout))
-    model.add(Dense(2, activation="sigmoid"))
+    model.add(Dense(output_shape[1], activation="linear"))
+    model.add(Flatten())
     # model.add(Dense(16, activation="linear"))
     # model.add(Dense(output_shape, activation="linear"))
-    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+    model.compile(loss="mse", optimizer="adam", metrics=["accuracy"])
     return model
 
 
@@ -73,10 +80,9 @@ def custom_mse(y_true, y_pred):
 
 
 bestmodel_path = "weights3.hdf5"
-x, y = process_stock_data_1("AAWW", 30)
-y = to_categorical(y)
+x, y = process_stock_data_1("AAL", 0)
 train_x, test_x, train_y, test_y = train_test_split(x, y, test_size=0.10, shuffle=False)
-model = build_model1(train_x.shape, 1)
+model = build_model1(train_x.shape, train_y.shape)
 checkpoint = ModelCheckpoint(bestmodel_path, monitor='val_loss', verbose=2, save_best_only=True, mode='max')
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.9, patience=25, min_lr=0.000001, verbose=1)
 callbacks_list = [checkpoint, reduce_lr]
