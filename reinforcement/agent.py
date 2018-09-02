@@ -54,7 +54,13 @@ class Agent:
                     self.model.predict(next_state)[0])
 
             target_f = self.model.predict(state)
+            print("State:")
+            print(state)
+            print("Before:")
+            print(target_f)
             target_f[0][action] = target
+            print("After:")
+            print(target_f)
             self.model.fit(state, target_f, epochs=1, verbose=0)
 
         if self.epsilon > self.epsilon_min:

@@ -13,12 +13,11 @@ batch_size = 32
 
 for e in range(episode_count + 1):
     state = getState(data, 0, window_size + 1)
-    print(state)
 
     total_profit = 0
     agent.inventory = []
 
-    for t in range(l):
+    for t in range(40):
         action = agent.act(state)
 
         next_state = getState(data, t + 1, window_size + 1)
