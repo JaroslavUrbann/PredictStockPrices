@@ -18,7 +18,7 @@ class Agent:
         self.gamma = 0.95
         self.epsilon = 1.0
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.995
+        self.epsilon_decay = 0.9975
 
         if is_eval:
             self.model = load_model("models/" + model_name)
@@ -50,17 +50,18 @@ class Agent:
         for state, action, reward, next_state, done in mini_batch:
             target = reward
             if not done:
-                target = reward + self.gamma * np.amax(
+                target = reward * self.gamma * np.amax(
                     self.model.predict(next_state)[0])
 
             target_f = self.model.predict(state)
-            print("State:")
-            print(state)
-            print("Before:")
-            print(target_f)
+            # print("reward: " + str(reward) + "    |   target: " + str(target))
+            # print("State:")
+            # print(state)
+            # print("Before:")
+            # print(target_f)
             target_f[0][action] = target
-            print("After:")
-            print(target_f)
+            # print("After:")
+            # print(target_f)
             self.model.fit(state, target_f, epochs=1, verbose=0)
 
         if self.epsilon > self.epsilon_min:

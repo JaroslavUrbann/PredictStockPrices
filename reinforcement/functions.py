@@ -1,5 +1,14 @@
 import numpy as np
 import math
+import matplotlib.pyplot as plt
+
+def get_change(first, second):
+    if second == first:
+        return 1.0
+    try:
+        return (second - first) / first + 1
+    except ZeroDivisionError:
+        return 0
 
 def getStockDataVec(key):
     vec = []
@@ -7,6 +16,7 @@ def getStockDataVec(key):
 
     for line in lines[1:]:
         vec.append(float(line.split(",")[4]))
+    vec.reverse()
 
     return vec
 
@@ -18,6 +28,6 @@ def getState(data, t, n):
     block = data[d:t + 1] if d >= 0 else -d * [data[0]] + data[0:t + 1] # pad with t0
     res = []
     for i in range(n - 1):
-        res.append(sigmoid(block[i + 1] - block[i]))
+        res.append(sigmoid(get_change(block[i], block[i + 1]) - 1))
 
     return np.array([res])
