@@ -2,6 +2,7 @@ from reinforcement.agent import Agent
 import sys
 from reinforcement.functions import *
 import sys
+import os.path
 
 stock_name = "AAL"
 window_size = 30
@@ -10,7 +11,7 @@ episode_count = 1
 agent = Agent(window_size)
 data = getStockDataVec(stock_name)
 l = len(data) - 1
-batch_size = 32
+batch_size = 1
 
 for e in range(episode_count):
     state = getState(data, 10, window_size + 1)
@@ -18,6 +19,7 @@ for e in range(episode_count):
     total_profit = 0
     dollars_needed = 0
     posral_to = 0
+    posral_to_holdem = 0
 
     for t in range(l):
         action = agent.act(state)
@@ -43,6 +45,10 @@ for e in range(episode_count):
             reward = max(get_change(data[t], data[t + 1]), 1)
             print("Hold: " + str(get_change(data[t], data[t + 1])))
 
+        elif action == 0 and len(agent.inventory) == 0:
+            print("posral to holdem")
+            posral_to_holdem += 1
+
         done = True if t == l - 5 else False
         agent.memory.append((state, action, reward, next_state, done))
         state = next_state
@@ -54,9 +60,11 @@ for e in range(episode_count):
             dollars_needed = sum(agent.inventory)
 
         if done:
+            agent.model.save('../models/reinforcement.h5')
             print("///////////////////////////////////////////////")
             print("Leftover shares: " + str(len(agent.inventory)))
             print("Posral to: " + str(posral_to))
+            print("Posral to holdem: " + str(posral_to_holdem))
             for i in range(len(agent.inventory)):
                 bought_price = agent.inventory.pop(0)
                 total_profit += data[t] - bought_price

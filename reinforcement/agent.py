@@ -1,5 +1,5 @@
 import keras
-from keras.layers import Dense
+from keras.layers import Dense, LSTM
 from keras.models import Sequential
 from keras.models import load_model
 import numpy as np
@@ -28,7 +28,8 @@ class Agent:
 
     def _model(self):
         model = Sequential()
-        model.add(Dense(64, batch_input_shape=(None, self.state_size), activation="relu"))
+        model.add(LSTM(64, batch_input_shape=(1, self.state_size, 1), stateful=True, activation="relu"))
+        model.add(Dense(64, activation="relu"))
         model.add(Dense(32, activation="relu"))
         model.add(Dense(2, activation="relu"))
         model.add(Dense(self.action_size, activation="linear"))
@@ -39,8 +40,7 @@ class Agent:
     def act(self, state):
         if not self.is_eval and random.random() <= self.epsilon:
             return random.randrange(self.action_size)
-
-        options = self.model.predict(state)
+        options = self.model.predict(state.reshape(1, self.state_size, 1))
         return np.argmax(options[0])
 
     def expReplay(self):
@@ -48,18 +48,11 @@ class Agent:
             target = reward
             if not done:
                 target = reward * self.gamma * np.amax(
-                    self.model.predict(next_state)[0])
-            target_f = self.model.predict(state)
-            # print("reward: " + str(reward) + "    |   target: " + str(target))
-            # print("State:")
-            # print(state)
-            # print("Before:")
-            # print(target_f)
+                    self.model.predict(next_state.reshape(1, self.state_size, 1))[0])
+            target_f = self.model.predict(state.reshape(1, self.state_size, 1))
             target_f[0][action] = target
-            print("Reward: " + str(reward) + "   |   Target: " + str(target) + "   |  Changed into: " + str(target_f[0][
-                action]))
-            # print("After:")
-            self.model.fit(state, target_f, epochs=1, verbose=0)
+            # print("Reward: " + str(reward) + "   |   Target: " + str(target))
+            self.model.train_on_batch(state.reshape(1, self.state_size, 1), target_f)
 
         self.memory = []
         if self.epsilon > self.epsilon_min:
